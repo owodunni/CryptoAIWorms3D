@@ -2,11 +2,19 @@ App = {
   web3Provider: null,
   contracts: {},
   account: '0x0',
+  renderer: null,
 
   init: function() {
+    return App.initWebGl();
+  },
+  initWebGl: function(){
+    canvas = document.querySelector("#glCanvas");
+    // Initialize the GL context
+    gl = canvas.getContext("webgl");
+    render = new WebGLRender(canvas, gl);
+    render.init()
     return App.initWeb3();
   },
-
   initWeb3: function() {
     if (typeof web3 !== 'undefined') {
       // If a web3 instance is already provided by Meta Mask.

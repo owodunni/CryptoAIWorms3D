@@ -36,9 +36,8 @@ contract WormFactory is Ownable {
     }
 
     function createRandomWorm(string memory _name) public {
-        //require(ownerWormCount[msg.sender] == 0, "Only one worm per owner");
+        require(ownerWormCount[msg.sender] == 0, "Only one worm per owner");
         uint randDna = _generateRandomDna(_name);
-        randDna = randDna - randDna % 100;
         _createWorm(_name, randDna);
     }
 }
