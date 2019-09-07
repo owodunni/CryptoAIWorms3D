@@ -27,7 +27,7 @@ class WebGLRender {
     }
 
     init() {
-        var geometry = new three.BoxGeometry(1, 1, 1);
+        var geometry = new three.BoxGeometry(0.1, 0.1, 0.1);
         //var material = new three.MeshNormalMaterial();
         /* * /
         var material = new three.MeshBasicMaterial({
@@ -36,72 +36,75 @@ class WebGLRender {
         /* */
         /* */
         three.ImageUtils.crossOrigin = '';
-        var texture = three.ImageUtils.loadTexture('http://i.imgur.com/CEGihbB.gif');
-        texture.anisotropy = renderer.getMaxAnisotropy();
 
-        var material = new three.MeshFaceMaterial([
-            new three.MeshBasicMaterial({
-                color: 0x00ff00
-            }),
-            new three.MeshBasicMaterial({
-                color: 0xff0000
-            }),
-            new three.MeshBasicMaterial({
-                //color: 0x0000ff,
-                map: texture
-            }),
-            new three.MeshBasicMaterial({
-                color: 0xffff00
-            }),
-            new three.MeshBasicMaterial({
-                color: 0x00ffff
-            }),
-            new three.MeshBasicMaterial({
-                color: 0xff00ff
-            })
-        ]);
-        /* */
+        var material = [];
+        for (var i = 0; i < 9; i++)
+            material.push(new three.MeshBasicMaterial({
+                color: 0x000000,
+                transparent: true,
+                opacity: 0.9,
+                side: THREE.DoubleSide
+            }));
 
-        var cube = new three.Mesh(geometry, material);
-        cube.rotation.x = Math.PI / 4;
-        cube.rotation.y = Math.PI / 4;
-        scene.add(cube);
+        var group = new three.Group();
+        group.rotation.x = Math.PI / 4;
+        group.rotation.y = Math.PI / 4;
 
+        var cube = new three.Mesh(geometry, material)
+        cube.translateX(0.2);
+        group.add(cube);
+
+        var cube = new three.Mesh(geometry, material)
+        cube.translateX(-0.2);
+        group.add(cube);
+
+        scene.add(group);
 
         camera.position.z = 5;
 
         /* */
- 
+
         this.canvas.onmousedown = function (e) {
             //console.log(e);
             isDragging = true;
         };
         this.canvas.onmousemove = function (e) {
-                //console.log(e);
-                var deltaMove = {
-                    x: e.offsetX - previousMousePosition.x,
-                    y: e.offsetY - previousMousePosition.y
-                };
-
-                if (isDragging) {
-
-                    var deltaRotationQuaternion = new three.Quaternion()
-                        .setFromEuler(new three.Euler(
-                            toRadians(deltaMove.y * 1),
-                            toRadians(deltaMove.x * 1),
-                            0,
-                            'XYZ'
-                        ));
-
-                    cube.quaternion.multiplyQuaternions(deltaRotationQuaternion, cube.quaternion);
-                }
-
-                previousMousePosition = {
-                    x: e.offsetX,
-                    y: e.offsetY
-                };
+            //console.log(e);
+            var deltaMove = {
+                x: e.offsetX - previousMousePosition.x,
+                y: e.offsetY - previousMousePosition.y
             };
-        /* */
+
+            if (isDragging) {
+
+                var deltaRotationQuaternion = new three.Quaternion()
+                    .setFromEuler(new three.Euler(
+                        toRadians(deltaMove.y * 1),
+                        toRadians(deltaMove.x * 1),
+                        0,
+                        'XYZ'
+                    ));
+
+                group.quaternion.multiplyQuaternions(deltaRotationQuaternion, group.quaternion);
+            }
+
+            previousMousePosition = {
+                x: e.offsetX,
+                y: e.offsetY
+            };
+        };
+        this.canvas.onwheel = function (e) {
+            var deltaZ = e.wheelDelta / 100;
+            if (camera.position.z + deltaZ < 0) {
+                camera.position.z = 0
+            }
+            else if (camera.position.z + deltaZ > 14) {
+                camera.position.z = 14;
+            }else{
+                camera.position.z += deltaZ;
+            }
+            return false;
+        }
 
         $(document).on('mouseup', function (e) {
             isDragging = false;
@@ -129,11 +132,6 @@ function draw() {
 
 
 function update(dt, t) {
-    //console.log(dt, t);
-
-    //camera.position.z += 1 * dt;
-    //cube.rotation.x += 1 * dt;
-    //cube.rotation.y += 1 * dt;
 
     setTimeout(function () {
         var currTime = new Date().getTime() / 1000;
