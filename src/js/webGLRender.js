@@ -1,368 +1,155 @@
-var cubeRotation = 0.0;
+const three = THREE;
+var lastFrameTime = new Date().getTime() / 1000;
+var totalGameTime = 0;
 
-// Vertex shader program
-const vsSource = `
-    attribute vec4 aVertexPosition;
-    attribute vec4 aVertexColor;
-    uniform mat4 uModelViewMatrix;
-    uniform mat4 uProjectionMatrix;
-    varying lowp vec4 vColor;
-    void main(void) {
-      gl_Position = uProjectionMatrix * uModelViewMatrix * aVertexPosition;
-      vColor = aVertexColor;
-    }
-  `;
+var isDragging = false;
+var previousMousePosition = {
+    x: 0,
+    y: 0
+};
 
-// Fragment shader program
-
-const fsSource = `
-    varying lowp vec4 vColor;
-    void main(void) {
-      gl_FragColor = vColor;
-    }
-  `;
+var renderer = null;
+var scene = null;
+var camera = null;
 
 class WebGLRender {
-    constructor(canvas, gl) {
+    constructor(canvas) {
+
         this.canvas = canvas;
-        this.gl = gl;
+        scene = new three.Scene();
+        camera = new three.PerspectiveCamera(
+            30,
+            canvas.width / canvas.height,
+            0.1,
+            1000);
 
-
-        // Only continue if WebGL is available and working
-        if (this.gl === null) {
-            alert("Unable to initialize WebGL. Your browser or machine may not support it.");
-            return;
-        }
-
-        // Set clear color to black, fully opaque
-        this.gl.clearColor(0.0, 1.0, 0.0, 1.0);
-        // Clear the color buffer with specified clear color
-        this.gl.clear(gl.COLOR_BUFFER_BIT);
+        renderer = new three.WebGLRenderer({ canvas: canvas });
     }
 
     init() {
+        var geometry = new three.BoxGeometry(1, 1, 1);
+        //var material = new three.MeshNormalMaterial();
+        /* * /
+        var material = new three.MeshBasicMaterial({
+            color: 0x00ff00
+        });
+        /* */
+        /* */
+        three.ImageUtils.crossOrigin = '';
+        var texture = three.ImageUtils.loadTexture('http://i.imgur.com/CEGihbB.gif');
+        texture.anisotropy = renderer.getMaxAnisotropy();
 
-        // Initialize a shader program; this is where all the lighting
-        // for the vertices and so forth is established.
-        const shaderProgram = this.initShaderProgram(gl, vsSource, fsSource);
+        var material = new three.MeshFaceMaterial([
+            new three.MeshBasicMaterial({
+                color: 0x00ff00
+            }),
+            new three.MeshBasicMaterial({
+                color: 0xff0000
+            }),
+            new three.MeshBasicMaterial({
+                //color: 0x0000ff,
+                map: texture
+            }),
+            new three.MeshBasicMaterial({
+                color: 0xffff00
+            }),
+            new three.MeshBasicMaterial({
+                color: 0x00ffff
+            }),
+            new three.MeshBasicMaterial({
+                color: 0xff00ff
+            })
+        ]);
+        /* */
 
-        // Collect all the info needed to use the shader program.
-        // Look up which attributes our shader program is using
-        // for aVertexPosition, aVevrtexColor and also
-        // look up uniform locations.
-        const programInfo = {
-            program: shaderProgram,
-            attribLocations: {
-                vertexPosition: gl.getAttribLocation(shaderProgram, 'aVertexPosition'),
-                vertexColor: gl.getAttribLocation(shaderProgram, 'aVertexColor'),
-            },
-            uniformLocations: {
-                projectionMatrix: gl.getUniformLocation(shaderProgram, 'uProjectionMatrix'),
-                modelViewMatrix: gl.getUniformLocation(shaderProgram, 'uModelViewMatrix'),
-            },
+        var cube = new three.Mesh(geometry, material);
+        cube.rotation.x = Math.PI / 4;
+        cube.rotation.y = Math.PI / 4;
+        scene.add(cube);
+
+
+        camera.position.z = 5;
+
+        /* */
+ 
+        this.canvas.onmousedown = function (e) {
+            //console.log(e);
+            isDragging = true;
         };
+        this.canvas.onmousemove = function (e) {
+                //console.log(e);
+                var deltaMove = {
+                    x: e.offsetX - previousMousePosition.x,
+                    y: e.offsetY - previousMousePosition.y
+                };
 
-        // objects we'll be drawing.
-        const buffers = this.initBuffers(gl);
+                if (isDragging) {
 
-        var then = 0;
+                    var deltaRotationQuaternion = new three.Quaternion()
+                        .setFromEuler(new three.Euler(
+                            toRadians(deltaMove.y * 1),
+                            toRadians(deltaMove.x * 1),
+                            0,
+                            'XYZ'
+                        ));
 
-        // Draw the scene repeatedly
-        function render(now) {
-            now *= 0.001;  // convert to seconds
-            const deltaTime = now - then;
-            then = now;
+                    cube.quaternion.multiplyQuaternions(deltaRotationQuaternion, cube.quaternion);
+                }
 
-            drawScene(gl, programInfo, buffers, deltaTime);
+                previousMousePosition = {
+                    x: e.offsetX,
+                    y: e.offsetY
+                };
+            };
+        /* */
 
-            requestAnimationFrame(render);
-        }
-        requestAnimationFrame(render);
-    }
+        $(document).on('mouseup', function (e) {
+            isDragging = false;
+        });
 
-    //
-    // initBuffers
-    //
-    // Initialize the buffers we'll need. For this demo, we just
-    // have one object -- a simple three-dimensional cube.
-    //
-    initBuffers(gl) {
+        // shim layer with setTimeout fallback
+        window.requestAnimFrame = (function () {
+            return window.requestAnimationFrame ||
+                window.webkitRequestAnimationFrame ||
+                window.mozRequestAnimationFrame ||
+                function (callback) {
+                    window.setTimeout(callback, 1000 / 60);
+                };
+        })();
 
-        // Create a buffer for the cube's vertex positions.
-
-        const positionBuffer = gl.createBuffer();
-
-        // Select the positionBuffer as the one to apply buffer
-        // operations to from here out.
-
-        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-
-        // Now create an array of positions for the cube.
-
-        const positions = [
-            // Front face
-            -1.0, -1.0, 1.0,
-            1.0, -1.0, 1.0,
-            1.0, 1.0, 1.0,
-            -1.0, 1.0, 1.0,
-
-            // Back face
-            -1.0, -1.0, -1.0,
-            -1.0, 1.0, -1.0,
-            1.0, 1.0, -1.0,
-            1.0, -1.0, -1.0,
-
-            // Top face
-            -1.0, 1.0, -1.0,
-            -1.0, 1.0, 1.0,
-            1.0, 1.0, 1.0,
-            1.0, 1.0, -1.0,
-
-            // Bottom face
-            -1.0, -1.0, -1.0,
-            1.0, -1.0, -1.0,
-            1.0, -1.0, 1.0,
-            -1.0, -1.0, 1.0,
-
-            // Right face
-            1.0, -1.0, -1.0,
-            1.0, 1.0, -1.0,
-            1.0, 1.0, 1.0,
-            1.0, -1.0, 1.0,
-
-            // Left face
-            -1.0, -1.0, -1.0,
-            -1.0, -1.0, 1.0,
-            -1.0, 1.0, 1.0,
-            -1.0, 1.0, -1.0,
-        ];
-
-        // Now pass the list of positions into WebGL to build the
-        // shape. We do this by creating a Float32Array from the
-        // JavaScript array, then use it to fill the current buffer.
-
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.STATIC_DRAW);
-
-        // Now set up the colors for the faces. We'll use solid colors
-        // for each face.
-
-        const faceColors = [
-            [1.0, 1.0, 1.0, 1.0],    // Front face: white
-            [1.0, 0.0, 0.0, 1.0],    // Back face: red
-            [0.0, 1.0, 0.0, 1.0],    // Top face: green
-            [0.0, 0.0, 1.0, 1.0],    // Bottom face: blue
-            [1.0, 1.0, 0.0, 1.0],    // Right face: yellow
-            [1.0, 0.0, 1.0, 1.0],    // Left face: purple
-        ];
-
-        // Convert the array of colors into a table for all the vertices.
-
-        var colors = [];
-
-        for (var j = 0; j < faceColors.length; ++j) {
-            const c = faceColors[j];
-
-            // Repeat each color four times for the four vertices of the face
-            colors = colors.concat(c, c, c, c);
-        }
-
-        const colorBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, colorBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(colors), gl.STATIC_DRAW);
-
-        // Build the element array buffer; this specifies the indices
-        // into the vertex arrays for each face's vertices.
-
-        const indexBuffer = gl.createBuffer();
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-
-        // This array defines each face as two triangles, using the
-        // indices into the vertex array to specify each triangle's
-        // position.
-
-        const indices = [
-            0, 1, 2, 0, 2, 3,    // front
-            4, 5, 6, 4, 6, 7,    // back
-            8, 9, 10, 8, 10, 11,   // top
-            12, 13, 14, 12, 14, 15,   // bottom
-            16, 17, 18, 16, 18, 19,   // right
-            20, 21, 22, 20, 22, 23,   // left
-        ];
-
-        // Now send the element array to GL
-
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,
-            new Uint16Array(indices), gl.STATIC_DRAW);
-
-        return {
-            position: positionBuffer,
-            color: colorBuffer,
-            indices: indexBuffer,
-        };
-    }
-
-  
-
-    initShaderProgram(gl, vsSource, fsSource) {
-        const vertexShader = this.loadShader(gl, gl.VERTEX_SHADER, vsSource);
-        const fragmentShader = this.loadShader(gl, gl.FRAGMENT_SHADER, fsSource);
-    
-        // Create the shader program
-    
-        const shaderProgram = gl.createProgram();
-        gl.attachShader(shaderProgram, vertexShader);
-        gl.attachShader(shaderProgram, fragmentShader);
-        gl.linkProgram(shaderProgram);
-    
-        // If creating the shader program failed, alert
-    
-        if (!gl.getProgramParameter(shaderProgram, gl.LINK_STATUS)) {
-            alert('Unable to initialize the shader program: ' + gl.getProgramInfoLog(shaderProgram));
-            return null;
-        }
-    
-        return shaderProgram;
-    }
-
-    loadShader(gl, type, source) {
-        const shader = gl.createShader(type);
-    
-        // Send the source to the shader object
-    
-        gl.shaderSource(shader, source);
-    
-        // Compile the shader program
-    
-        gl.compileShader(shader);
-    
-        // See if it compiled successfully
-    
-        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-            alert('An error occurred compiling the shaders: ' + gl.getShaderInfoLog(shader));
-            gl.deleteShader(shader);
-            return null;
-        }
-    
-        return shader;
+        draw();
+        update(0, totalGameTime);
     }
 }
 
-function drawScene(gl, programInfo, buffers, deltaTime) {
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);  // Clear to black, fully opaque
-    gl.clearDepth(1.0);                 // Clear everything
-    gl.enable(gl.DEPTH_TEST);           // Enable depth testing
-    gl.depthFunc(gl.LEQUAL);            // Near things obscure far things
+function draw() {
+    renderer.render(scene, camera);
+    requestAnimFrame(draw);
+}
 
-    // Clear the canvas before we start drawing on it.
 
-    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+function update(dt, t) {
+    //console.log(dt, t);
 
-    // Create a perspective matrix, a special matrix that is
-    // used to simulate the distortion of perspective in a camera.
-    // Our field of view is 45 degrees, with a width/height
-    // ratio that matches the display size of the canvas
-    // and we only want to see objects between 0.1 units
-    // and 100 units away from the camera.
+    //camera.position.z += 1 * dt;
+    //cube.rotation.x += 1 * dt;
+    //cube.rotation.y += 1 * dt;
 
-    const fieldOfView = 45 * Math.PI / 180;   // in radians
-    const aspect = gl.canvas.clientWidth / gl.canvas.clientHeight;
-    const zNear = 0.1;
-    const zFar = 100.0;
-    const projectionMatrix = glMatrix.mat4.create();
+    setTimeout(function () {
+        var currTime = new Date().getTime() / 1000;
+        var dt = currTime - (lastFrameTime || currTime);
+        totalGameTime += dt;
 
-    // note: glmatrix.js always has the first argument
-    // as the destination to receive the result.
-    glMatrix.mat4.perspective(projectionMatrix,
-        fieldOfView,
-        aspect,
-        zNear,
-        zFar);
+        update(dt, totalGameTime);
 
-    // Set the drawing position to the "identity" point, which is
-    // the center of the scene.
-    const modelViewMatrix = glMatrix.mat4.create();
+        lastFrameTime = currTime;
+    }, 0);
+}
 
-    // Now move the drawing position a bit to where we want to
-    // start drawing the square.
+function toRadians(angle) {
+    return angle * (Math.PI / 180);
+}
 
-    glMatrix.mat4.translate(modelViewMatrix,     // destination matrix
-        modelViewMatrix,     // matrix to translate
-        [-0.0, 0.0, -6.0]);  // amount to translate
-        glMatrix.mat4.rotate(modelViewMatrix,  // destination matrix
-        modelViewMatrix,  // matrix to rotate
-        cubeRotation,     // amount to rotate in radians
-        [0, 0, 1]);       // axis to rotate around (Z)
-        glMatrix.mat4.rotate(modelViewMatrix,  // destination matrix
-        modelViewMatrix,  // matrix to rotate
-        cubeRotation * .7,// amount to rotate in radians
-        [0, 1, 0]);       // axis to rotate around (X)
-
-    // Tell WebGL how to pull out the positions from the position
-    // buffer into the vertexPosition attribute
-    {
-        const numComponents = 3;
-        const type = gl.FLOAT;
-        const normalize = false;
-        const stride = 0;
-        const offset = 0;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.position);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexPosition,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexPosition);
-    }
-
-    // Tell WebGL how to pull out the colors from the color buffer
-    // into the vertexColor attribute.
-    {
-        const numComponents = 4;
-        const type = gl.FLOAT;
-        const normalize = false;
-        const stride = 0;
-        const offset = 0;
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffers.color);
-        gl.vertexAttribPointer(
-            programInfo.attribLocations.vertexColor,
-            numComponents,
-            type,
-            normalize,
-            stride,
-            offset);
-        gl.enableVertexAttribArray(
-            programInfo.attribLocations.vertexColor);
-    }
-
-    // Tell WebGL which indices to use to index the vertices
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, buffers.indices);
-
-    // Tell WebGL to use our program when drawing
-
-    gl.useProgram(programInfo.program);
-
-    // Set the shader uniforms
-
-    gl.uniformMatrix4fv(
-        programInfo.uniformLocations.projectionMatrix,
-        false,
-        projectionMatrix);
-    gl.uniformMatrix4fv(
-        programInfo.uniformLocations.modelViewMatrix,
-        false,
-        modelViewMatrix);
-
-    {
-        const vertexCount = 36;
-        const type = gl.UNSIGNED_SHORT;
-        const offset = 0;
-        gl.drawElements(gl.TRIANGLES, vertexCount, type, offset);
-    }
-
-    // Update the rotation for the next draw
-
-    cubeRotation += deltaTime;
+function toDegrees(angle) {
+    return angle * (180 / Math.PI);
 }
