@@ -2,7 +2,7 @@ App = {
   web3Provider: null,
   contracts: {},
   account: '0x0',
-  renderer: null,
+  gameEngine: null,
 
   init: function() {
     return App.initWebGl();
@@ -11,8 +11,7 @@ App = {
     canvas = document.querySelector("#glCanvas");
     // Initialize the GL context
     gl = canvas.getContext("webgl");
-    render = new WebGLRender(canvas, gl);
-    render.init()
+    App.gameEngine = new GameEngine(new WebGLRender(canvas, gl));
     return App.initWeb3();
   },
   initWeb3: function() {
@@ -66,6 +65,7 @@ App = {
     console.log("Rendering worms " + wormCount)
     var worms = $("#worms");
     worms.empty();
+    this.gameWorms = [];
 
     for (var i = 0; i < wormCount; i++) {
       wormFactoryInstance.worms(i).then(function(worm) {
@@ -73,6 +73,7 @@ App = {
         var id = worm[0];
         var name = worm[1];
         var dna = worm[2];
+        this.gameWorms.push(new Worm(id,name,dna));
 
         // Render candidate Result
         var wormTemplate = "<tr><th>" + id + "</th><td>" + name + "</td><td>" + dna + "</td></tr>";
@@ -105,8 +106,36 @@ App = {
         App.render();
       });
     });
+  },
+  startSimulation: function(){
+    web3.eth.getBlock(2,function(err, block) {
+      return App.createGameBoard(
+        block.hash + 
+        block.parentHash + 
+        block.transactionRoot,
+        block.sha3Uncles);
+    })
+  },
+  createGameBoard: function(foodHash, wormHash){
+    App.gameEngine.AddFood(hashToArray(foodHash));
+    console.log(gameWorms);
+    App.gameEngine.AddWorms(gameWorms);
+    App.gameEngine.AddWormStartingPos(hashToArray(wormHash));
+    App.gameEngine.init();
+    setInterval (App.updateSimulation, 30);
+  },
+  updateSimulation: function(){
+    App.gameEngine.Update();
   }
 };
+
+function hashToArray(hash){
+  var array_ = new Uint8Array(Math.ceil(hash.length / 2));
+  for (var i = 0; i < array_.length; i++){
+    array_[i] = parseInt(hash.substr(i * 2, 2), 16);
+  }
+  return array_;
+}
 
 $(function() {
   $(window).load(function() {

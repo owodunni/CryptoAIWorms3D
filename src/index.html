@@ -30,40 +30,43 @@
           <p class="text-center">Loading...</p>
         </div>
         <div id="content" style="display: none;">
-          
-            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseSimulation"
+
+          <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseSimulation"
             aria-expanded="false" aria-controls="collapseSimulation">
             Simulate
           </button>
           <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseWorms"
-          aria-expanded="false" aria-controls="collapseWorms">
-          Worms
-        </button>
+            aria-expanded="false" aria-controls="collapseWorms">
+            Worms
+          </button>
+
+          <button type="submit" class="btn btn-primary" onclick="App.startSimulation();">Run</button>
+          
           <hr />
-          <div class="collapse" id="collapseWorms" >
-          <table class="table">
-            <thead>
-              <tr>
-                <th scope="col">#</th>
-                <th scope="col">Worm</th>
-                <th scope="col">Dna</th>
-              </tr>
-            </thead>
-            <tbody id="worms">
-            </tbody>
-          </table>
-          <hr />
-          <form onSubmit="App.createWorm(); return false;">
-            <div class="form-group">
-              <label for="createWorm">Create Worm</label>
-              <input type="text" class="form-control" id="wormName">
-            </div>
-            <button type="submit" class="btn btn-primary">Create</button>
-          </form>
-          <hr />
-        </div>
+          <div class="collapse" id="collapseWorms">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">Worm</th>
+                  <th scope="col">Dna</th>
+                </tr>
+              </thead>
+              <tbody id="worms">
+              </tbody>
+            </table>
+            <hr />
+            <form onSubmit="App.createWorm(); return false;">
+              <div class="form-group">
+                <label for="createWorm">Create Worm</label>
+                <input type="text" class="form-control" id="wormName">
+              </div>
+              <button type="submit" class="btn btn-primary">Create</button>
+            </form>
+            <hr />
+          </div>
           <div class="collapse" id="collapseSimulation">
-              <canvas id="glCanvas" width="640" height="480"></canvas>
+            <canvas id="glCanvas" width="640" height="480"></canvas>
           </div>
         </div>
       </div>
@@ -76,6 +79,7 @@
     <script src="js/web3.min.js"></script>
     <script src="js/truffle-contract.js"></script>
     <script src="js/three.js"></script>
+    <script src="js/gameEngine.js"></script>
     <script src="js/webGLRender.js"></script>
     <script src="js/app.js"></script>
 </body>

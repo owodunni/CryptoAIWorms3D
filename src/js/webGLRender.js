@@ -12,6 +12,11 @@ var renderer = null;
 var scene = null;
 var camera = null;
 
+
+var group = new three.Group();
+group.rotation.x = Math.PI / 4;
+group.rotation.y = Math.PI / 4;
+
 class WebGLRender {
     constructor(canvas) {
 
@@ -27,40 +32,31 @@ class WebGLRender {
     }
 
     init() {
-        var geometry = new three.BoxGeometry(0.1, 0.1, 0.1);
 
         three.ImageUtils.crossOrigin = '';
 
-        var material = [];
+        this.foodMaterial = [];
         for (var i = 0; i < 9; i++)
-            material.push(new three.MeshLambertMaterial({
-                color: 0x0087E6,
+            this.foodMaterial.push(new three.MeshLambertMaterial({
+                color: 0x34eb8f,
             }));
 
-        var group = new three.Group();
-        group.rotation.x = Math.PI / 4;
-        group.rotation.y = Math.PI / 4;
+        this.wormMaterial = [];
+        for (var i = 0; i < 9; i++)
+            this.wormMaterial.push(new three.MeshLambertMaterial({
+                color: 0xeb3d34,
+            }));
 
-        var cube = new three.Mesh(geometry, material)
-        cube.translateX(0.2);
-        group.add(cube);
+        scene.add(new THREE.AmbientLight(0x404040));
 
-        var cube = new three.Mesh(geometry, material)
-        cube.translateX(-0.2);
-        group.add(cube);
+        var directionalLight = new THREE.DirectionalLight(0xFFFFFF, 1);
+        directionalLight.position.set(100, 350, 250);
+        directionalLight.castShadow = false;
+        scene.add(directionalLight);
 
         scene.add(group);
-        
-        scene.add(new THREE.AmbientLight( 0x404040 ));
-
-        var directionalLight = new THREE.DirectionalLight( 0xFFFFFF, 1 );
-        directionalLight.position.set( 100, 350, 250 );
-        directionalLight.castShadow = false;
-        scene.add( directionalLight );
 
         camera.position.z = 5;
-
-        /* */
 
         this.canvas.onmousedown = function (e) {
             //console.log(e);
@@ -83,7 +79,9 @@ class WebGLRender {
                         'XYZ'
                     ));
 
-                group.quaternion.multiplyQuaternions(deltaRotationQuaternion, group.quaternion);
+                group.quaternion.multiplyQuaternions(
+                    deltaRotationQuaternion,
+                    group.quaternion);
             }
 
             previousMousePosition = {
@@ -92,13 +90,13 @@ class WebGLRender {
             };
         };
         this.canvas.onwheel = function (e) {
-            var deltaZ = e.wheelDelta / 100;
-            if (camera.position.z + deltaZ < 0) {
-                camera.position.z = 0
+            var deltaZ = e.wheelDelta / 300;
+            if (camera.position.z + deltaZ < -3) {
+                camera.position.z = -3
             }
             else if (camera.position.z + deltaZ > 14) {
                 camera.position.z = 14;
-            }else{
+            } else {
                 camera.position.z += deltaZ;
             }
             return false;
@@ -120,6 +118,38 @@ class WebGLRender {
 
         draw();
         update(0, totalGameTime);
+    }
+    initializeObj(gameObjs) {
+        var geometry = new three.BoxGeometry(3 / 256.0, 3 / 256.0, 3 / 256.0);
+
+        gameObjs.forEach(gameObj => {
+            var cube = null;
+            if (gameObj instanceof Food) {
+                cube = new three.Mesh(geometry, this.foodMaterial);
+            }
+            else {
+                cube = new three.Mesh(geometry, this.wormMaterial)
+            }
+            cube.translateX(gameObj.x / 256);
+            cube.translateY(gameObj.y / 256);
+            cube.translateZ(gameObj.z / 256);
+
+            gameObj.cube = cube;
+
+            group.add(cube);
+        });
+    }
+
+    updateObjects(gameObjs) {
+        gameObjs.forEach(gameObj => {
+            if (gameObj instanceof Worm) {
+                gameObj.cube.position.set(0, 0, 0);
+                gameObj.cube.translateX(gameObj.x / 256);
+                gameObj.cube.translateY(gameObj.y / 256);
+                gameObj.cube.translateZ(gameObj.z / 256);
+            }
+        });
+
     }
 }
 
