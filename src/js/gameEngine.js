@@ -28,9 +28,10 @@ class Worm{
 
 
 class GameEngine {
-    constructor(renderer) {
-        this.renderer = renderer;
-        renderer.init();
+    constructor(world) {
+        this.world;
+
+        //placeVoxel(10, 10, 20, 3);
         this.gameObjects = [];
     }
 
@@ -60,11 +61,11 @@ class GameEngine {
     }
 
     init(){
-        this.renderer.initializeObj(this.gameObjects);
+        //this.renderer.initializeObj(this.gameObjects);
     }
 
     Update(){
-        this.renderer.updateObjects(this.gameObjects);
+        //this.renderer.updateObjects(this.gameObjects);
         this.gameObjects.forEach(gameObj => {
             if(gameObj instanceof Worm){
                 gameObj.takeAction(null);

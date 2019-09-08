@@ -8,10 +8,8 @@ App = {
     return App.initWebGl();
   },
   initWebGl: function(){
-    canvas = document.querySelector("#glCanvas");
-    // Initialize the GL context
-    gl = canvas.getContext("webgl");
-    App.gameEngine = new GameEngine(new WebGLRender(canvas, gl));
+    
+    App.gameEngine = new GameEngine(new VoxelWorldHandler());
     return App.initWeb3();
   },
   initWeb3: function() {

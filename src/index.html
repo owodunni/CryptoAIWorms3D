@@ -66,7 +66,10 @@
             <hr />
           </div>
           <div class="collapse" id="collapseSimulation">
-            <canvas id="glCanvas" width="640" height="480"></canvas>
+              <canvas id="c" style=" 
+              width: 640px;
+              height: 480px;
+              display: block;">
           </div>
         </div>
       </div>
@@ -74,13 +77,15 @@
 
     <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <script src="https://threejsfundamentals.org/threejs/resources/threejs/r105/three.min.js"></script>
+    <script src="https://threejsfundamentals.org/threejs/resources/threejs/r105/js/controls/OrbitControls.js"></script>
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="js/bootstrap.min.js"></script>
     <script src="js/web3.min.js"></script>
     <script src="js/truffle-contract.js"></script>
-    <script src="js/three.js"></script>
     <script src="js/gameEngine.js"></script>
-    <script src="js/webGLRender.js"></script>
+    <!--script src="js/webGLRender.js"></script-->
+    <script src="js/VoxelWorld.js"></script>
     <script src="js/app.js"></script>
 </body>
 
