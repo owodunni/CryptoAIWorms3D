@@ -28,22 +28,13 @@ class WebGLRender {
 
     init() {
         var geometry = new three.BoxGeometry(0.1, 0.1, 0.1);
-        //var material = new three.MeshNormalMaterial();
-        /* * /
-        var material = new three.MeshBasicMaterial({
-            color: 0x00ff00
-        });
-        /* */
-        /* */
+
         three.ImageUtils.crossOrigin = '';
 
         var material = [];
         for (var i = 0; i < 9; i++)
-            material.push(new three.MeshBasicMaterial({
-                color: 0x000000,
-                transparent: true,
-                opacity: 0.9,
-                side: THREE.DoubleSide
+            material.push(new three.MeshLambertMaterial({
+                color: 0x0087E6,
             }));
 
         var group = new three.Group();
@@ -59,6 +50,13 @@ class WebGLRender {
         group.add(cube);
 
         scene.add(group);
+        
+        scene.add(new THREE.AmbientLight( 0x404040 ));
+
+        var directionalLight = new THREE.DirectionalLight( 0xFFFFFF, 1 );
+        directionalLight.position.set( 100, 350, 250 );
+        directionalLight.castShadow = false;
+        scene.add( directionalLight );
 
         camera.position.z = 5;
 
