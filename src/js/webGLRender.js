@@ -29,6 +29,15 @@ class WebGLRender {
             1000);
 
         renderer = new three.WebGLRenderer({ canvas: canvas });
+
+
+        fxaaPass = new ShaderPass( FXAAShader );
+        var pixelRatio = renderer.getPixelRatio();
+        fxaaPass.material.uniforms[ 'resolution' ].value.x = 1 / ( container.offsetWidth * pixelRatio );
+        fxaaPass.material.uniforms[ 'resolution' ].value.y = 1 / ( container.offsetHeight * pixelRatio );
+        composer1 = new EffectComposer( renderer );
+        composer1.addPass( renderPass );
+        composer1.addPass( fxaaPass );
     }
 
     init() {

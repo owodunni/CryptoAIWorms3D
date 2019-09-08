@@ -20,12 +20,20 @@ class Worm{
     }
 
     takeAction(env){
-        this.updatePos(x,y,z);
-        this.x += Math.floor(Math.random() * 3 - 1)
-        this.y += Math.floor(Math.random() * 3 - 1)
-        this.z += Math.floor(Math.random() * 3 - 1)
+        var dir = Math.floor(Math.random() * 6)
+        this.x += directions[dir][0];
+        this.y += directions[dir][1];
+        this.z += directions[dir][2];
     }
 }
+
+const directions = [
+    [-1, 0, 0,],
+    [1, 0, 0,],
+    [0, -1, 0,],
+    [0, 1, 0,],
+    [0, 0, -1,],
+    [0, 0, 1,]]
 
 
 class GameEngine {
@@ -66,7 +74,7 @@ class GameEngine {
     }
 
     Update(){
-        //this.renderer.updateObjects(this.gameObjects);
+        this.updateGameObjs(this.gameObjects);
         this.gameObjects.forEach(gameObj => {
             if(gameObj instanceof Worm){
                 gameObj.takeAction(null);

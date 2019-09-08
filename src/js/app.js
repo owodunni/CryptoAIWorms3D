@@ -120,7 +120,7 @@ App = {
     App.gameEngine.AddWorms(gameWorms);
     App.gameEngine.AddWormStartingPos(hashToArray(wormHash));
     App.gameEngine.init();
-    setInterval (App.updateSimulation, 30);
+    setInterval (App.updateSimulation, 300);
   },
   updateSimulation: function(){
     App.gameEngine.Update();
