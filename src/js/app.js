@@ -9,7 +9,7 @@ App = {
   },
   initWebGl: function(){
     
-    App.gameEngine = new GameEngine(new VoxelWorldHandler());
+    App.gameEngine = new GameEngine(initVoxelWorld());
     return App.initWeb3();
   },
   initWeb3: function() {

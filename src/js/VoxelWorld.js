@@ -268,191 +268,147 @@ VoxelWorld.faces = [
     },
 ];
 
-let renderRequested = false;
-let renderer = null;
-let camera = null;
-let controls = null;
-let scene = null;
-
-const cellSize = 23;
-
-class VoxelWorldHandler {
-    constructor() {
-        const canvas = document.querySelector('#c');
-        renderer = new THREE.WebGLRenderer({ canvas });
-
-        const fov = 75;
-        const aspect = 2;  // the canvas default
-        const near = 0.1;
-        const far = 1000;
-        camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
-        camera.position.set(-cellSize * .3, cellSize * .8, -cellSize * .3);
-
-        controls = new THREE.OrbitControls(camera, canvas);
-        controls.target.set(cellSize / 2, cellSize / 3, cellSize / 2);
-        controls.update();
-
-        scene = new THREE.Scene();
-        scene.background = new THREE.Color('lightblue');
-
-        const tileSize = 16;
-        const tileTextureWidth = 256;
-        const tileTextureHeight = 64;
-        const loader = new THREE.TextureLoader();
-        const texture = loader.load('https://threejsfundamentals.org/threejs/resources/images/minecraft/flourish-cc-by-nc-sa.png', this.render);
-        texture.magFilter = THREE.NearestFilter;
-        texture.minFilter = THREE.NearestFilter;
-
-        this.addLight(-1, 2, 4);
-        this.addLight(1, -1, -2);
-
-        this.world = new VoxelWorld({
-            cellSize,
-            tileSize,
-            tileTextureWidth,
-            tileTextureHeight,
-        });
-
-        this.material = new THREE.MeshLambertMaterial({
-            map: texture,
-            side: THREE.DoubleSide,
-            alphaTest: 0.1,
-            transparent: true,
-        });
-
-        this.cellIdToMesh = {};
-
-        this.neighborOffsets = [
-            [0, 0, 0], // self
-            [-1, 0, 0], // left
-            [1, 0, 0], // right
-            [0, -1, 0], // down
-            [0, 1, 0], // up
-            [0, 0, -1], // back
-            [0, 0, 1], // front
-        ];
-
-        for (let y = 0; y < this.cellSize; ++y) {
-          for (let z = 0; z < this.cellSize; ++z) {
-            for (let x = 0; x < this.cellSize; ++x) {
-              const height = (Math.sin(x / cellSize * Math.PI * 2) +
-              Math.sin(z / cellSize * Math.PI * 3)) * (cellSize / 6) +
-              (cellSize / 2);
-              if (y < height) {
-                this.world.setVoxel(x, y, z, randInt(1, 17));
-              }
-            }
+function initVoxelWorld() {
+    const canvas = document.querySelector('#c');
+    const renderer = new THREE.WebGLRenderer({canvas});
+  
+    const cellSize = 64;
+  
+    const fov = 75;
+    const aspect = 2;  // the canvas default
+    const near = 0.1;
+    const far = 1000;
+    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    camera.position.set(-cellSize * .3, cellSize * .8, -cellSize * .3);
+  
+    const controls = new THREE.OrbitControls(camera, canvas);
+    controls.target.set(cellSize / 2, cellSize / 3, cellSize / 2);
+    controls.update();
+  
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('lightblue');
+  
+    function addLight(x, y, z) {
+      const color = 0xFFFFFF;
+      const intensity = 1;
+      const light = new THREE.DirectionalLight(color, intensity);
+      light.position.set(x, y, z);
+      scene.add(light);
+    }
+    addLight(-1,  2,  4);
+    addLight( 1, -1, -2);
+  
+  
+    const loader = new THREE.TextureLoader();
+    const texture = loader.load('https://threejsfundamentals.org/threejs/resources/images/minecraft/flourish-cc-by-nc-sa.png', render);
+    texture.magFilter = THREE.NearestFilter;
+    texture.minFilter = THREE.NearestFilter;
+  
+    const tileSize = 16;
+    const tileTextureWidth = 256;
+    const tileTextureHeight = 64;
+    const world = new VoxelWorld({
+      cellSize,
+      tileSize,
+      tileTextureWidth,
+      tileTextureHeight,
+    });
+  
+    /*for (let y = 0; y < cellSize; ++y) {
+      for (let z = 0; z < cellSize; ++z) {
+        for (let x = 0; x < cellSize; ++x) {
+          const height = (Math.sin(x / cellSize * Math.PI * 2) + Math.sin(z / cellSize * Math.PI * 3)) * (cellSize / 6) + (cellSize / 2);
+          if (y < height) {
+            world.setVoxel(x, y, z, randInt(1, 17));
           }
         }
-
-        function randInt(min, max) {
-            return Math.floor(Math.random() * (max - min) + min);
-        }
-
-        function resizeRendererToDisplaySize(renderer) {
-            const canvas = renderer.domElement;
-            const width = canvas.clientWidth;
-            const height = canvas.clientHeight;
-            const needResize = canvas.width !== width || canvas.height !== height;
-            if (needResize) {
-                renderer.setSize(width, height, false);
-            }
-            return needResize;
-        }
-    
-        function render() {
-            renderRequested = undefined;
-            if (resizeRendererToDisplaySize(renderer)) {
-                const canvas = renderer.domElement;
-                camera.aspect = canvas.clientWidth / canvas.clientHeight;
-                camera.updateProjectionMatrix();
-            }
-    
-            controls.update();
-            renderer.render(scene, camera);
-        }
-
-        function requestRenderIfNotRequested() {
-            if (!renderRequested) {
-                renderRequested = true;
-                requestAnimationFrame(render);
-            }
-        }
-        this.updateVoxelGeometry(1, 1, 1);  // 0,0,0 will generate
-
-        render();
-
-        controls.addEventListener('change', requestRenderIfNotRequested);
-        window.addEventListener('resize', requestRenderIfNotRequested);
+      }
+    }*/
+  
+    function randInt(min, max) {
+      return Math.floor(Math.random() * (max - min) + min);
     }
-
-    addLight(x, y, z) {
-        const color = 0xFFFFFF;
-        const intensity = 1;
-        const light = new THREE.DirectionalLight(color, intensity);
-        light.position.set(x, y, z);
-        scene.add(light);
-    }
-
-    updateCellGeometry(x, y, z) {
-        const cellX = Math.floor(x / cellSize);
-        const cellY = Math.floor(y / cellSize);
-        const cellZ = Math.floor(z / cellSize);
-        const cellId = this.world.computeCellId(x, y, z);
-        let mesh = this.cellIdToMesh[cellId];
-        if (!mesh) {
-            const geometry = new THREE.BufferGeometry();
-            const positionNumComponents = 3;
-            const normalNumComponents = 3;
-            const uvNumComponents = 2;
-
-            geometry.addAttribute(
-                'position',
-                new THREE.BufferAttribute(new Float32Array(0), positionNumComponents));
-            geometry.addAttribute(
-                'normal',
-                new THREE.BufferAttribute(new Float32Array(0), normalNumComponents));
-            geometry.addAttribute(
-                'uv',
-                new THREE.BufferAttribute(new Float32Array(0), uvNumComponents));
-
-            mesh = new THREE.Mesh(geometry, this.material);
-            mesh.name = cellId;
-            this.cellIdToMesh[cellId] = mesh;
-            scene.add(mesh);
-            mesh.position.set(
-                cellX * cellSize,
-                cellY * cellSize, 
-                cellZ * cellSize);
-        }
-
-        const { positions, normals, uvs, indices } = this.world.generateGeometryDataForCell(cellX, cellY, cellZ);
-        const geometry = mesh.geometry;
-        geometry.getAttribute('position').setArray(new Float32Array(positions)).needsUpdate = true;
-        geometry.getAttribute('normal').setArray(new Float32Array(normals)).needsUpdate = true;
-        geometry.getAttribute('uv').setArray(new Float32Array(uvs)).needsUpdate = true;
+  
+    function updateMesh(){
+        const {positions, normals, uvs, indices} = world.generateGeometryDataForCell(0, 0, 0);
+        const geometry = new THREE.BufferGeometry();
+        const material = new THREE.MeshLambertMaterial({
+          map: texture,
+          side: THREE.DoubleSide,
+          alphaTest: 0.1,
+          transparent: true,
+        });
+      
+        const positionNumComponents = 3;
+        const normalNumComponents = 3;
+        const uvNumComponents = 2;
+        geometry.addAttribute(
+            'position',
+            new THREE.BufferAttribute(new Float32Array(positions), positionNumComponents));
+        geometry.addAttribute(
+            'normal',
+            new THREE.BufferAttribute(new Float32Array(normals), normalNumComponents));
+        geometry.addAttribute(
+            'uv',
+            new THREE.BufferAttribute(new Float32Array(uvs), uvNumComponents));
         geometry.setIndex(indices);
-        geometry.computeBoundingSphere();
+        const mesh = new THREE.Mesh(geometry, material);
+        scene.add(mesh);
     }
 
+    updateMesh();
+  
+    function resizeRendererToDisplaySize(renderer) {
+      const canvas = renderer.domElement;
+      const width = canvas.clientWidth;
+      const height = canvas.clientHeight;
+      const needResize = canvas.width !== width || canvas.height !== height;
+      if (needResize) {
+        renderer.setSize(width, height, false);
+      }
+      return needResize;
+    }
+  
+    let renderRequested = false;
+  
+    function render() {
+      renderRequested = undefined;
+  
+      if (resizeRendererToDisplaySize(renderer)) {
+        const canvas = renderer.domElement;
+        camera.aspect = canvas.clientWidth / canvas.clientHeight;
+        camera.updateProjectionMatrix();
+      }
+  
+      controls.update();
+      renderer.render(scene, camera);
+    }
+    render();
+  
+    function requestRenderIfNotRequested() {
+        console.log("requestRenderIfNotRequested")
+      if (!renderRequested) {
+        renderRequested = true;
+        requestAnimationFrame(render);
+      }
+    }
 
-    updateVoxelGeometry(x, y, z) {
-        const updatedCellIds = {};
-        for (const offset of this.neighborOffsets) {
-            const ox = x + offset[0];
-            const oy = y + offset[1];
-            const oz = z + offset[2];
-            const cellId = this.world.computeCellId(ox, oy, oz);
-            if (!updatedCellIds[cellId]) {
-                updatedCellIds[cellId] = true;
-                this.updateCellGeometry(ox, oy, oz);
+    controls.addEventListener('change', requestRenderIfNotRequested);
+    window.addEventListener('resize', requestRenderIfNotRequested);
+
+    function updateGameObjs(gameObjs){
+        world.setVoxel(10, 10, 10, 3);
+        gameObjs.forEach(obj => {
+            if(obj instanceof Food){
+                console.log("Food");
+                world.setVoxel(obj.x, obj.y, obj.z, 3);
             }
-        }
-    }
+            else{
+                world.setVoxel(obj.x, obj.y, obj.z, 6);
+            }
+        });
 
-    placeVoxel(x, y, z, id) {
-        this.world.setVoxel(x, y, z, id);
-        updateVoxelGeometry(x, y, z);
-        requestRenderIfNotRequested();
+        updateMesh();
     }
-}
+    return updateGameObjs;
+  }

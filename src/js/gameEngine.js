@@ -1,8 +1,8 @@
 class Food{
     constructor(x,y,z){
-        this.x = x - 128;
-        this.y = y - 128;
-        this.z = z - 128;
+        this.x = x/4;
+        this.y = y/4;
+        this.z = z/4;
     }
 }
 
@@ -14,12 +14,13 @@ class Worm{
     }
 
     updatePos(x,y,z){
-        this.x = x - 128;
-        this.y = y - 128;
-        this.z = z - 128;    
+        this.x = x/4;
+        this.y = y/4;
+        this.z = z/4;    
     }
 
     takeAction(env){
+        this.updatePos(x,y,z);
         this.x += Math.floor(Math.random() * 3 - 1)
         this.y += Math.floor(Math.random() * 3 - 1)
         this.z += Math.floor(Math.random() * 3 - 1)
@@ -28,10 +29,10 @@ class Worm{
 
 
 class GameEngine {
-    constructor(world) {
-        this.world;
+    constructor(updateGameObjs) {
 
-        //placeVoxel(10, 10, 20, 3);
+        GameEngine.prototype.updateGameObjs = updateGameObjs;
+
         this.gameObjects = [];
     }
 
@@ -61,7 +62,7 @@ class GameEngine {
     }
 
     init(){
-        //this.renderer.initializeObj(this.gameObjects);
+        this.updateGameObjs(this.gameObjects);
     }
 
     Update(){
