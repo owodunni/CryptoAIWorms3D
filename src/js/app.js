@@ -12,15 +12,27 @@ App = {
     App.gameEngine = new GameEngine(initVoxelWorld());
     return App.initWeb3();
   },
-  initWeb3: function() {
-    if (typeof web3 !== 'undefined') {
-      // If a web3 instance is already provided by Meta Mask.
-      App.web3Provider = web3.currentProvider;
-      web3 = new Web3(web3.currentProvider);
-    } else {
-      // Specify default instance if no web3 instance provided
-      App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
-      web3 = new Web3(App.web3Provider);
+  initWeb3: async function() {
+    // Modern dapp browsers...
+    if (window.ethereum) {
+      window.web3 = new Web3(ethereum);
+      try {
+          // Request account access if needed
+          await ethereum.enable();
+          App.web3Provider = web3.currentProvider;
+      } catch (error) {
+        console.error(error);
+      }
+    }else{
+      if (typeof web3 !== 'undefined') {
+        // If a web3 instance is already provided by Meta Mask.
+        App.web3Provider = web3.currentProvider;
+        web3 = new Web3(web3.currentProvider);
+      } else {
+        // Specify default instance if no web3 instance provided
+        App.web3Provider = new Web3.providers.HttpProvider('http://localhost:7545');
+        web3 = new Web3(App.web3Provider);
+      }
     }
     return App.initContract();
   },
